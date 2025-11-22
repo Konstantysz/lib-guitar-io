@@ -68,62 +68,52 @@ namespace GuitarIO
         pImpl->callback = std::move(callback);
         pImpl->userData = userData;
 
-        try
+        // Configure input parameters
+        if (config.inputChannels > 0)
         {
-            // Configure input parameters
-            if (config.inputChannels > 0)
-            {
-                pImpl->inputParams.deviceId = deviceId;
-                pImpl->inputParams.nChannels = config.inputChannels;
-                pImpl->inputParams.firstChannel = 0;
-                pImpl->hasInput = true;
-            }
-
-            // Configure output parameters (if needed)
-            if (config.outputChannels > 0)
-            {
-                pImpl->outputParams.deviceId = deviceId;
-                pImpl->outputParams.nChannels = config.outputChannels;
-                pImpl->outputParams.firstChannel = 0;
-                pImpl->hasOutput = true;
-            }
-
-            // Open stream
-            unsigned int bufferFrames = config.bufferSize;
-            unsigned int sampleRate = config.sampleRate;
-
-            pImpl->rtAudio.openStream(
-                pImpl->hasOutput ? &pImpl->outputParams : nullptr,
-                pImpl->hasInput ? &pImpl->inputParams : nullptr,
-                RTAUDIO_FLOAT32,
-                sampleRate,
-                &bufferFrames,
-                &Impl::RtAudioCallback,
-                pImpl.get()
-            );
-
-            return true;
+            pImpl->inputParams.deviceId = deviceId;
+            pImpl->inputParams.nChannels = config.inputChannels;
+            pImpl->inputParams.firstChannel = 0;
+            pImpl->hasInput = true;
         }
-        catch (const RtAudioError& error)
+
+        // Configure output parameters (if needed)
+        if (config.outputChannels > 0)
         {
-            pImpl->lastError = error.getMessage();
+            pImpl->outputParams.deviceId = deviceId;
+            pImpl->outputParams.nChannels = config.outputChannels;
+            pImpl->outputParams.firstChannel = 0;
+            pImpl->hasOutput = true;
+        }
+
+        // Open stream
+        unsigned int bufferFrames = config.bufferSize;
+        unsigned int sampleRate = config.sampleRate;
+
+        RtAudioErrorType result = pImpl->rtAudio.openStream(
+            pImpl->hasOutput ? &pImpl->outputParams : nullptr,
+            pImpl->hasInput ? &pImpl->inputParams : nullptr,
+            RTAUDIO_FLOAT32,
+            sampleRate,
+            &bufferFrames,
+            &Impl::RtAudioCallback,
+            pImpl.get()
+        );
+
+        if (result != RTAUDIO_NO_ERROR)
+        {
+            pImpl->lastError = pImpl->rtAudio.getErrorText();
             return false;
         }
+
+        return true;
     }
 
     bool AudioDevice::OpenDefault(const AudioStreamConfig& config,
                                    AudioCallback callback, void* userData)
     {
-        try
-        {
-            uint32_t defaultDevice = pImpl->rtAudio.getDefaultInputDevice();
-            return Open(defaultDevice, config, std::move(callback), userData);
-        }
-        catch (const RtAudioError& error)
-        {
-            pImpl->lastError = error.getMessage();
-            return false;
-        }
+        uint32_t defaultDevice = pImpl->rtAudio.getDefaultInputDevice();
+        return Open(defaultDevice, config, std::move(callback), userData);
     }
 
     bool AudioDevice::Start()
@@ -134,16 +124,14 @@ namespace GuitarIO
             return false;
         }
 
-        try
+        RtAudioErrorType result = pImpl->rtAudio.startStream();
+        if (result != RTAUDIO_NO_ERROR)
         {
-            pImpl->rtAudio.startStream();
-            return true;
-        }
-        catch (const RtAudioError& error)
-        {
-            pImpl->lastError = error.getMessage();
+            pImpl->lastError = pImpl->rtAudio.getErrorText();
             return false;
         }
+
+        return true;
     }
 
     bool AudioDevice::Stop()
@@ -154,34 +142,25 @@ namespace GuitarIO
             return false;
         }
 
-        try
+        RtAudioErrorType result = pImpl->rtAudio.stopStream();
+        if (result != RTAUDIO_NO_ERROR)
         {
-            pImpl->rtAudio.stopStream();
-            return true;
-        }
-        catch (const RtAudioError& error)
-        {
-            pImpl->lastError = error.getMessage();
+            pImpl->lastError = pImpl->rtAudio.getErrorText();
             return false;
         }
+
+        return true;
     }
 
     void AudioDevice::Close()
     {
         if (IsOpen())
         {
-            try
+            if (IsRunning())
             {
-                if (IsRunning())
-                {
-                    pImpl->rtAudio.stopStream();
-                }
-                pImpl->rtAudio.closeStream();
+                pImpl->rtAudio.stopStream();
             }
-            catch (const RtAudioError&)
-            {
-                // Ignore errors during cleanup
-            }
+            pImpl->rtAudio.closeStream();
         }
 
         pImpl->hasInput = false;

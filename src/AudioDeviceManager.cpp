@@ -13,32 +13,25 @@ namespace GuitarIO
     {
         std::vector<AudioDeviceInfo> devices;
 
-        try
-        {
-            RtAudio audio;
-            const auto deviceCount = audio.getDeviceCount();
+        RtAudio audio;
+        const auto deviceCount = audio.getDeviceCount();
 
-            for (unsigned int i = 0; i < deviceCount; ++i)
+        for (unsigned int i = 0; i < deviceCount; ++i)
+        {
+            RtAudio::DeviceInfo info = audio.getDeviceInfo(i);
+
+            // Only include devices with input channels
+            if (info.inputChannels > 0)
             {
-                RtAudio::DeviceInfo info = audio.getDeviceInfo(i);
+                AudioDeviceInfo deviceInfo;
+                deviceInfo.name = info.name;
+                deviceInfo.id = i;
+                deviceInfo.maxInputChannels = info.inputChannels;
+                deviceInfo.maxOutputChannels = info.outputChannels;
+                deviceInfo.supportedSampleRates = info.sampleRates;
 
-                // Only include devices with input channels
-                if (info.inputChannels > 0)
-                {
-                    AudioDeviceInfo deviceInfo;
-                    deviceInfo.name = info.name;
-                    deviceInfo.id = i;
-                    deviceInfo.maxInputChannels = info.inputChannels;
-                    deviceInfo.maxOutputChannels = info.outputChannels;
-                    deviceInfo.supportedSampleRates = info.sampleRates;
-
-                    devices.push_back(deviceInfo);
-                }
+                devices.push_back(deviceInfo);
             }
-        }
-        catch (const RtAudioError&)
-        {
-            // Return empty vector on error
         }
 
         return devices;
@@ -46,37 +39,23 @@ namespace GuitarIO
 
     uint32_t AudioDeviceManager::GetDefaultInputDevice() const
     {
-        try
-        {
-            RtAudio audio;
-            return audio.getDefaultInputDevice();
-        }
-        catch (const RtAudioError&)
-        {
-            return 0;
-        }
+        RtAudio audio;
+        return audio.getDefaultInputDevice();
     }
 
     AudioDeviceInfo AudioDeviceManager::GetDeviceInfo(uint32_t deviceId) const
     {
-        try
-        {
-            RtAudio audio;
-            RtAudio::DeviceInfo info = audio.getDeviceInfo(deviceId);
+        RtAudio audio;
+        RtAudio::DeviceInfo info = audio.getDeviceInfo(deviceId);
 
-            AudioDeviceInfo deviceInfo;
-            deviceInfo.name = info.name;
-            deviceInfo.id = deviceId;
-            deviceInfo.maxInputChannels = info.inputChannels;
-            deviceInfo.maxOutputChannels = info.outputChannels;
-            deviceInfo.supportedSampleRates = info.sampleRates;
+        AudioDeviceInfo deviceInfo;
+        deviceInfo.name = info.name;
+        deviceInfo.id = deviceId;
+        deviceInfo.maxInputChannels = info.inputChannels;
+        deviceInfo.maxOutputChannels = info.outputChannels;
+        deviceInfo.supportedSampleRates = info.sampleRates;
 
-            return deviceInfo;
-        }
-        catch (const RtAudioError&)
-        {
-            return AudioDeviceInfo{}; // Return empty info on error
-        }
+        return deviceInfo;
     }
 
 } // namespace GuitarIO

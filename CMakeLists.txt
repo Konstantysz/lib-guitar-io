@@ -42,8 +42,8 @@ endif()
 set(RTAUDIO_BUILD_TESTING OFF CACHE BOOL "Don't build RtAudio tests")
 add_subdirectory(external/rtaudio)
 
-# Create guitar-io library
-add_library(guitar-io
+# Create guitar-io library (static)
+add_library(guitar-io STATIC
     src/AudioDevice.cpp
     src/AudioDeviceManager.cpp
 )
