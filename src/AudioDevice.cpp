@@ -1,6 +1,6 @@
 #include "AudioDevice.h"
-#include <RtAudio.h>
 #include <stdexcept>
+#include <RtAudio.h>
 
 namespace GuitarIO
 {
@@ -12,7 +12,7 @@ namespace GuitarIO
     public:
         RtAudio rtAudio;
         AudioCallback callback;
-        void* userData = nullptr;
+        void *userData = nullptr;
         std::string lastError;
         RtAudio::StreamParameters inputParams;
         RtAudio::StreamParameters outputParams;
@@ -22,29 +22,27 @@ namespace GuitarIO
         /**
          * @brief RtAudio callback adapter
          */
-        static int RtAudioCallback(void* outputBuffer, void* inputBuffer,
-                                   unsigned int nFrames,
-                                   double /*streamTime*/,
-                                   RtAudioStreamStatus /*status*/,
-                                   void* userData)
+        static int RtAudioCallback(void *outputBuffer,
+            void *inputBuffer,
+            unsigned int nFrames,
+            double /*streamTime*/,
+            RtAudioStreamStatus /*status*/,
+            void *userData)
         {
-            auto* impl = static_cast<Impl*>(userData);
+            auto *impl = static_cast<Impl *>(userData);
             if (!impl || !impl->callback)
             {
                 return 1; // Stop stream
             }
 
-            return impl->callback(
-                static_cast<const float*>(inputBuffer),
-                static_cast<float*>(outputBuffer),
+            return impl->callback(static_cast<const float *>(inputBuffer),
+                static_cast<float *>(outputBuffer),
                 static_cast<size_t>(nFrames),
-                impl->userData
-            );
+                impl->userData);
         }
     };
 
-    AudioDevice::AudioDevice()
-        : pImpl(std::make_unique<Impl>())
+    AudioDevice::AudioDevice() : pImpl(std::make_unique<Impl>())
     {
     }
 
@@ -53,11 +51,10 @@ namespace GuitarIO
         Close();
     }
 
-    AudioDevice::AudioDevice(AudioDevice&&) noexcept = default;
-    AudioDevice& AudioDevice::operator=(AudioDevice&&) noexcept = default;
+    AudioDevice::AudioDevice(AudioDevice &&) noexcept = default;
+    AudioDevice &AudioDevice::operator=(AudioDevice &&) noexcept = default;
 
-    bool AudioDevice::Open(uint32_t deviceId, const AudioStreamConfig& config,
-                           AudioCallback callback, void* userData)
+    bool AudioDevice::Open(uint32_t deviceId, const AudioStreamConfig &config, AudioCallback callback, void *userData)
     {
         if (IsOpen())
         {
@@ -90,15 +87,13 @@ namespace GuitarIO
         unsigned int bufferFrames = config.bufferSize;
         unsigned int sampleRate = config.sampleRate;
 
-        RtAudioErrorType result = pImpl->rtAudio.openStream(
-            pImpl->hasOutput ? &pImpl->outputParams : nullptr,
+        RtAudioErrorType result = pImpl->rtAudio.openStream(pImpl->hasOutput ? &pImpl->outputParams : nullptr,
             pImpl->hasInput ? &pImpl->inputParams : nullptr,
             RTAUDIO_FLOAT32,
             sampleRate,
             &bufferFrames,
             &Impl::RtAudioCallback,
-            pImpl.get()
-        );
+            pImpl.get());
 
         if (result != RTAUDIO_NO_ERROR)
         {
@@ -109,8 +104,7 @@ namespace GuitarIO
         return true;
     }
 
-    bool AudioDevice::OpenDefault(const AudioStreamConfig& config,
-                                   AudioCallback callback, void* userData)
+    bool AudioDevice::OpenDefault(const AudioStreamConfig &config, AudioCallback callback, void *userData)
     {
         uint32_t defaultDevice = pImpl->rtAudio.getDefaultInputDevice();
         return Open(defaultDevice, config, std::move(callback), userData);

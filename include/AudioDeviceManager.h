@@ -15,7 +15,7 @@ namespace GuitarIO
          * @brief Returns the singleton instance
          * @return AudioDeviceManager instance
          */
-        static AudioDeviceManager& Get();
+        static AudioDeviceManager &Get();
 
         /**
          * @brief Enumerates all available audio input devices
@@ -41,10 +41,10 @@ namespace GuitarIO
         ~AudioDeviceManager() = default;
 
         // Non-copyable, non-movable
-        AudioDeviceManager(const AudioDeviceManager&) = delete;
-        AudioDeviceManager& operator=(const AudioDeviceManager&) = delete;
-        AudioDeviceManager(AudioDeviceManager&&) = delete;
-        AudioDeviceManager& operator=(AudioDeviceManager&&) = delete;
+        AudioDeviceManager(const AudioDeviceManager &) = delete;
+        AudioDeviceManager &operator=(const AudioDeviceManager &) = delete;
+        AudioDeviceManager(AudioDeviceManager &&) = delete;
+        AudioDeviceManager &operator=(AudioDeviceManager &&) = delete;
     };
 
 } // namespace GuitarIO

@@ -3,7 +3,7 @@
 
 namespace GuitarIO
 {
-    AudioDeviceManager& AudioDeviceManager::Get()
+    AudioDeviceManager &AudioDeviceManager::Get()
     {
         static AudioDeviceManager instance;
         return instance;

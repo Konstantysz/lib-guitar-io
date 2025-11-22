@@ -14,10 +14,10 @@ namespace GuitarIO
      */
     struct AudioDeviceInfo
     {
-        std::string name;         ///< Device name
-        uint32_t id;              ///< Device ID
-        uint32_t maxInputChannels;  ///< Maximum input channels
-        uint32_t maxOutputChannels; ///< Maximum output channels
+        std::string name;                           ///< Device name
+        uint32_t id;                                ///< Device ID
+        uint32_t maxInputChannels;                  ///< Maximum input channels
+        uint32_t maxOutputChannels;                 ///< Maximum output channels
         std::vector<uint32_t> supportedSampleRates; ///< Supported sample rates
     };
 
@@ -26,10 +26,10 @@ namespace GuitarIO
      */
     struct AudioStreamConfig
     {
-        uint32_t sampleRate = 48000;    ///< Sample rate (Hz)
-        uint32_t bufferSize = 512;      ///< Buffer size (frames)
-        uint32_t inputChannels = 1;     ///< Number of input channels
-        uint32_t outputChannels = 0;    ///< Number of output channels (0 for input-only)
+        uint32_t sampleRate = 48000; ///< Sample rate (Hz)
+        uint32_t bufferSize = 512;   ///< Buffer size (frames)
+        uint32_t inputChannels = 1;  ///< Number of input channels
+        uint32_t outputChannels = 0; ///< Number of output channels (0 for input-only)
     };
 
     /**
@@ -40,10 +40,8 @@ namespace GuitarIO
      * @param userData User data pointer
      * @return 0 to continue, non-zero to stop stream
      */
-    using AudioCallback = std::function<int(const float* inputBuffer,
-                                            float* outputBuffer,
-                                            size_t frameCount,
-                                            void* userData)>;
+    using AudioCallback =
+        std::function<int(const float *inputBuffer, float *outputBuffer, size_t frameCount, void *userData)>;
 
     /**
      * @brief Cross-platform audio device abstraction
@@ -65,12 +63,12 @@ namespace GuitarIO
         ~AudioDevice();
 
         // Non-copyable
-        AudioDevice(const AudioDevice&) = delete;
-        AudioDevice& operator=(const AudioDevice&) = delete;
+        AudioDevice(const AudioDevice &) = delete;
+        AudioDevice &operator=(const AudioDevice &) = delete;
 
         // Movable
-        AudioDevice(AudioDevice&&) noexcept;
-        AudioDevice& operator=(AudioDevice&&) noexcept;
+        AudioDevice(AudioDevice &&) noexcept;
+        AudioDevice &operator=(AudioDevice &&) noexcept;
 
         /**
          * @brief Opens an audio stream
@@ -80,8 +78,7 @@ namespace GuitarIO
          * @param userData User data pointer passed to callback
          * @return true on success, false on failure
          */
-        bool Open(uint32_t deviceId, const AudioStreamConfig& config,
-                  AudioCallback callback, void* userData = nullptr);
+        bool Open(uint32_t deviceId, const AudioStreamConfig &config, AudioCallback callback, void *userData = nullptr);
 
         /**
          * @brief Opens the default audio input device
@@ -90,8 +87,7 @@ namespace GuitarIO
          * @param userData User data pointer passed to callback
          * @return true on success, false on failure
          */
-        bool OpenDefault(const AudioStreamConfig& config,
-                         AudioCallback callback, void* userData = nullptr);
+        bool OpenDefault(const AudioStreamConfig &config, AudioCallback callback, void *userData = nullptr);
 
         /**
          * @brief Starts the audio stream
