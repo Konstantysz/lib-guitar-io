@@ -35,10 +35,21 @@ namespace GuitarIO
                 return 1; // Stop stream
             }
 
-            return impl->callback(static_cast<const float *>(inputBuffer),
-                static_cast<float *>(outputBuffer),
-                static_cast<size_t>(nFrames),
-                impl->userData);
+            // Create std::span wrappers for buffers
+            std::span<const float> inputSpan;
+            std::span<float> outputSpan;
+
+            if (inputBuffer != nullptr)
+            {
+                inputSpan = std::span<const float>(static_cast<const float *>(inputBuffer), nFrames);
+            }
+
+            if (outputBuffer != nullptr)
+            {
+                outputSpan = std::span<float>(static_cast<float *>(outputBuffer), nFrames);
+            }
+
+            return impl->callback(inputSpan, outputSpan, impl->userData);
         }
     };
 

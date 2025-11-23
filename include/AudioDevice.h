@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <span>
 
 namespace GuitarIO
 {
@@ -34,14 +35,13 @@ namespace GuitarIO
 
     /**
      * @brief Audio callback function type
-     * @param inputBuffer Input audio buffer (nullptr if no input)
-     * @param outputBuffer Output audio buffer (nullptr if no output)
-     * @param frameCount Number of frames in buffer
+     * @param inputBuffer Input audio buffer (empty span if no input)
+     * @param outputBuffer Output audio buffer (empty span if no output)
      * @param userData User data pointer
      * @return 0 to continue, non-zero to stop stream
      */
     using AudioCallback =
-        std::function<int(const float *inputBuffer, float *outputBuffer, size_t frameCount, void *userData)>;
+        std::function<int(std::span<const float> inputBuffer, std::span<float> outputBuffer, void *userData)>;
 
     /**
      * @brief Cross-platform audio device abstraction
