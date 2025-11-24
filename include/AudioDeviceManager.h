@@ -1,38 +1,42 @@
 #pragma once
 
 #include "AudioDevice.h"
+#include <RtAudio.h>
 #include <vector>
 
 namespace GuitarIO
 {
     /**
      * @brief Audio device enumeration and management
+     *
+     * Singleton class that provides device enumeration using a shared RtAudio instance.
+     * This avoids conflicts when an audio stream is already active.
+     *
+     * IMPORTANT: Audio device IDs are platform-specific and not sequential.
+     * On Windows, IDs may be values like 132, 133, etc., not 0, 1, 2...
+     * Always use getDeviceIds() to iterate over valid device IDs.
      */
     class AudioDeviceManager
     {
     public:
-        /**
-         * @brief Returns the singleton instance
-         * @return AudioDeviceManager instance
-         */
         static AudioDeviceManager &Get();
 
         /**
-         * @brief Enumerates all available audio input devices
-         * @return Vector of device information
+         * @brief Enumerate all available audio input devices
+         * @return Vector of device information for devices with input channels
          */
         [[nodiscard]] std::vector<AudioDeviceInfo> EnumerateInputDevices() const;
 
         /**
-         * @brief Returns the default input device ID
-         * @return Default device ID
+         * @brief Get default input device ID
+         * @return Platform default input device ID
          */
         [[nodiscard]] uint32_t GetDefaultInputDevice() const;
 
         /**
-         * @brief Returns device information by ID
-         * @param deviceId Device ID
-         * @return Device information (empty name if not found)
+         * @brief Get device information by ID
+         * @param deviceId Platform-specific device ID
+         * @return Device information (empty name if device not found)
          */
         [[nodiscard]] AudioDeviceInfo GetDeviceInfo(uint32_t deviceId) const;
 
@@ -40,11 +44,12 @@ namespace GuitarIO
         AudioDeviceManager() = default;
         ~AudioDeviceManager() = default;
 
-        // Non-copyable, non-movable
         AudioDeviceManager(const AudioDeviceManager &) = delete;
         AudioDeviceManager &operator=(const AudioDeviceManager &) = delete;
         AudioDeviceManager(AudioDeviceManager &&) = delete;
         AudioDeviceManager &operator=(AudioDeviceManager &&) = delete;
+
+        mutable RtAudio rtAudio;  ///< Shared instance for device queries
     };
 
 } // namespace GuitarIO

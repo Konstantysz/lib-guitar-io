@@ -13,19 +13,19 @@ namespace GuitarIO
     {
         std::vector<AudioDeviceInfo> devices;
 
-        RtAudio audio;
-        const auto deviceCount = audio.getDeviceCount();
+        // Use getDeviceIds() instead of iterating 0 to deviceCount
+        // because device IDs are not sequential (e.g., Windows may have IDs like 132, 133...)
+        std::vector<unsigned int> deviceIds = rtAudio.getDeviceIds();
 
-        for (unsigned int i = 0; i < deviceCount; ++i)
+        for (unsigned int deviceId : deviceIds)
         {
-            RtAudio::DeviceInfo info = audio.getDeviceInfo(i);
+            RtAudio::DeviceInfo info = rtAudio.getDeviceInfo(deviceId);
 
-            // Only include devices with input channels
             if (info.inputChannels > 0)
             {
                 AudioDeviceInfo deviceInfo;
                 deviceInfo.name = info.name;
-                deviceInfo.id = i;
+                deviceInfo.id = deviceId;
                 deviceInfo.maxInputChannels = info.inputChannels;
                 deviceInfo.maxOutputChannels = info.outputChannels;
                 deviceInfo.supportedSampleRates = info.sampleRates;
@@ -39,14 +39,12 @@ namespace GuitarIO
 
     uint32_t AudioDeviceManager::GetDefaultInputDevice() const
     {
-        RtAudio audio;
-        return audio.getDefaultInputDevice();
+        return rtAudio.getDefaultInputDevice();
     }
 
     AudioDeviceInfo AudioDeviceManager::GetDeviceInfo(uint32_t deviceId) const
     {
-        RtAudio audio;
-        RtAudio::DeviceInfo info = audio.getDeviceInfo(deviceId);
+        RtAudio::DeviceInfo info = rtAudio.getDeviceInfo(deviceId);
 
         AudioDeviceInfo deviceInfo;
         deviceInfo.name = info.name;
