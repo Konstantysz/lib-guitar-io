@@ -41,12 +41,14 @@ namespace GuitarIO
 
             if (inputBuffer != nullptr)
             {
-                inputSpan = std::span<const float>(static_cast<const float *>(inputBuffer), nFrames);
+                unsigned int channels = impl->hasInput ? impl->inputParams.nChannels : 1;
+                inputSpan = std::span<const float>(static_cast<const float *>(inputBuffer), nFrames * channels);
             }
 
             if (outputBuffer != nullptr)
             {
-                outputSpan = std::span<float>(static_cast<float *>(outputBuffer), nFrames);
+                unsigned int channels = impl->hasOutput ? impl->outputParams.nChannels : 1;
+                outputSpan = std::span<float>(static_cast<float *>(outputBuffer), nFrames * channels);
             }
 
             return impl->callback(inputSpan, outputSpan, impl->userData);

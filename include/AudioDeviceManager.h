@@ -19,6 +19,10 @@ namespace GuitarIO
     class AudioDeviceManager
     {
     public:
+        /**
+         * @brief Returns the singleton instance
+         * @return AudioDeviceManager instance
+         */
         static AudioDeviceManager &Get();
 
         /**
@@ -28,10 +32,22 @@ namespace GuitarIO
         [[nodiscard]] std::vector<AudioDeviceInfo> EnumerateInputDevices() const;
 
         /**
+         * @brief Enumerate all available audio output devices
+         * @return Vector of device information for devices with output channels
+         */
+        [[nodiscard]] std::vector<AudioDeviceInfo> EnumerateOutputDevices() const;
+
+        /**
          * @brief Get default input device ID
          * @return Platform default input device ID
          */
         [[nodiscard]] uint32_t GetDefaultInputDevice() const;
+
+        /**
+         * @brief Get default output device ID
+         * @return Platform default output device ID
+         */
+        [[nodiscard]] uint32_t GetDefaultOutputDevice() const;
 
         /**
          * @brief Get device information by ID
