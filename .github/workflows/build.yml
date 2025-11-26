@@ -50,6 +50,7 @@ jobs:
             libxcursor-dev \
             libxi-dev \
             libgl1-mesa-dev \
+            libasound2-dev \
             build-essential \
             cmake \
             ninja-build
