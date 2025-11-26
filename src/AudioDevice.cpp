@@ -10,14 +10,14 @@ namespace GuitarIO
     class AudioDevice::Impl
     {
     public:
-        RtAudio rtAudio;
-        AudioCallback callback;
-        void *userData = nullptr;
-        std::string lastError;
-        RtAudio::StreamParameters inputParams;
-        RtAudio::StreamParameters outputParams;
-        bool hasInput = false;
-        bool hasOutput = false;
+        RtAudio rtAudio;                        ///< RtAudio instance
+        AudioCallback callback;                 ///< User callback function
+        void *userData = nullptr;               ///< User data pointer
+        std::string lastError;                  ///< Last error message
+        RtAudio::StreamParameters inputParams;  ///< Input stream parameters
+        RtAudio::StreamParameters outputParams; ///< Output stream parameters
+        bool hasInput = false;                  ///< Flag indicating input is enabled
+        bool hasOutput = false;                 ///< Flag indicating output is enabled
 
         /**
          * @brief RtAudio callback adapter

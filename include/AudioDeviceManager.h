@@ -1,8 +1,8 @@
 #pragma once
 
 #include "AudioDevice.h"
-#include <RtAudio.h>
 #include <vector>
+#include <RtAudio.h>
 
 namespace GuitarIO
 {
@@ -57,15 +57,25 @@ namespace GuitarIO
         [[nodiscard]] AudioDeviceInfo GetDeviceInfo(uint32_t deviceId) const;
 
     private:
+        /**
+         * @brief Private constructor for singleton
+         */
         AudioDeviceManager() = default;
+
+        /**
+         * @brief Private destructor
+         */
         ~AudioDeviceManager() = default;
 
         AudioDeviceManager(const AudioDeviceManager &) = delete;
+
         AudioDeviceManager &operator=(const AudioDeviceManager &) = delete;
+
         AudioDeviceManager(AudioDeviceManager &&) = delete;
+
         AudioDeviceManager &operator=(AudioDeviceManager &&) = delete;
 
-        mutable RtAudio rtAudio;  ///< Shared instance for device queries
+        mutable RtAudio rtAudio; ///< Shared instance for device queries
     };
 
 } // namespace GuitarIO

@@ -73,10 +73,10 @@ namespace GuitarIO
         [[nodiscard]] size_t GetActiveVoiceCount() const;
 
     private:
-        std::array<SineWaveGenerator, MAX_VOICES> voices;
-        std::array<double, MAX_VOICES> frequencies;
-        float globalVolume = 0.5f;
-        size_t activeVoiceCount = 0;
+        std::array<SineWaveGenerator, MAX_VOICES> voices; ///< Array of oscillators
+        std::array<double, MAX_VOICES> frequencies;       ///< Array of frequencies
+        float globalVolume = 0.5f;                        ///< Global volume
+        size_t activeVoiceCount = 0;                      ///< Number of active voices
 
         void UpdateActiveVoiceCount();
     };

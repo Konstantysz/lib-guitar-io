@@ -47,12 +47,15 @@ namespace GuitarIO
         void Reset();
 
     private:
+        /**
+         * @brief Updates the phase increment based on frequency and sample rate
+         */
         void UpdateIncrement();
 
-        double sampleRate = 48000.0;
-        double frequency = 440.0;
-        float amplitude = 0.5f;
-        double currentPhase = 0.0;
-        double phaseIncrement = 0.0;
+        double sampleRate = 48000.0; ///< Audio sample rate in Hz
+        double frequency = 440.0;    ///< Wave frequency in Hz
+        float amplitude = 0.5f;      ///< Wave amplitude [0.0, 1.0]
+        double currentPhase = 0.0;   ///< Current phase accumulator [0.0, 2*PI]
+        double phaseIncrement = 0.0; ///< Phase increment per sample
     };
 } // namespace GuitarIO

@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
-#include <span>
 
 namespace GuitarIO
 {
@@ -62,13 +62,21 @@ namespace GuitarIO
          */
         ~AudioDevice();
 
-        // Non-copyable
         AudioDevice(const AudioDevice &) = delete;
         AudioDevice &operator=(const AudioDevice &) = delete;
 
-        // Movable
-        AudioDevice(AudioDevice &&) noexcept;
-        AudioDevice &operator=(AudioDevice &&) noexcept;
+        /**
+         * @brief Move constructor
+         * @param other Instance to move from
+         */
+        AudioDevice(AudioDevice &&other) noexcept;
+
+        /**
+         * @brief Move assignment operator
+         * @param other Instance to move from
+         * @return Reference to this instance
+         */
+        AudioDevice &operator=(AudioDevice &&other) noexcept;
 
         /**
          * @brief Opens an audio stream
