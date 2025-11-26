@@ -4,58 +4,7 @@
 
 namespace GuitarIO
 {
-    /**
-     * @brief PIMPL implementation class wrapping RtAudio
-     */
-    class AudioDevice::Impl
-    {
-    public:
-        RtAudio rtAudio;                        ///< RtAudio instance
-        AudioCallback callback;                 ///< User callback function
-        void *userData = nullptr;               ///< User data pointer
-        std::string lastError;                  ///< Last error message
-        RtAudio::StreamParameters inputParams;  ///< Input stream parameters
-        RtAudio::StreamParameters outputParams; ///< Output stream parameters
-        bool hasInput = false;                  ///< Flag indicating input is enabled
-        bool hasOutput = false;                 ///< Flag indicating output is enabled
-
-        /**
-         * @brief RtAudio callback adapter
-         */
-        static int RtAudioCallback(void *outputBuffer,
-            void *inputBuffer,
-            unsigned int nFrames,
-            double /*streamTime*/,
-            RtAudioStreamStatus /*status*/,
-            void *userData)
-        {
-            auto *impl = static_cast<Impl *>(userData);
-            if (!impl || !impl->callback)
-            {
-                return 1; // Stop stream
-            }
-
-            // Create std::span wrappers for buffers
-            std::span<const float> inputSpan;
-            std::span<float> outputSpan;
-
-            if (inputBuffer != nullptr)
-            {
-                unsigned int channels = impl->hasInput ? impl->inputParams.nChannels : 1;
-                inputSpan = std::span<const float>(static_cast<const float *>(inputBuffer), nFrames * channels);
-            }
-
-            if (outputBuffer != nullptr)
-            {
-                unsigned int channels = impl->hasOutput ? impl->outputParams.nChannels : 1;
-                outputSpan = std::span<float>(static_cast<float *>(outputBuffer), nFrames * channels);
-            }
-
-            return impl->callback(inputSpan, outputSpan, impl->userData);
-        }
-    };
-
-    AudioDevice::AudioDevice() : pImpl(std::make_unique<Impl>())
+    AudioDevice::AudioDevice()
     {
     }
 
@@ -64,77 +13,75 @@ namespace GuitarIO
         Close();
     }
 
-    AudioDevice::AudioDevice(AudioDevice &&) noexcept = default;
-    AudioDevice &AudioDevice::operator=(AudioDevice &&) noexcept = default;
-
-    bool AudioDevice::Open(uint32_t deviceId, const AudioStreamConfig &config, AudioCallback callback, void *userData)
+    bool
+        AudioDevice::Open(uint32_t deviceId, const AudioStreamConfig &config, AudioCallback userCallback, void *userPtr)
     {
         if (IsOpen())
         {
-            pImpl->lastError = "Device already open";
+            lastError = "Device already open";
             return false;
         }
 
-        pImpl->callback = std::move(callback);
-        pImpl->userData = userData;
+        this->callback = std::move(userCallback);
+        this->userData = userPtr;
 
         // Configure input parameters
         if (config.inputChannels > 0)
         {
-            pImpl->inputParams.deviceId = deviceId;
-            pImpl->inputParams.nChannels = config.inputChannels;
-            pImpl->inputParams.firstChannel = 0;
-            pImpl->hasInput = true;
+            inputParams.deviceId = deviceId;
+            inputParams.nChannels = config.inputChannels;
+            inputParams.firstChannel = 0;
+            hasInput = true;
         }
 
         // Configure output parameters (if needed)
         if (config.outputChannels > 0)
         {
-            pImpl->outputParams.deviceId = deviceId;
-            pImpl->outputParams.nChannels = config.outputChannels;
-            pImpl->outputParams.firstChannel = 0;
-            pImpl->hasOutput = true;
+            outputParams.deviceId = deviceId;
+            outputParams.nChannels = config.outputChannels;
+            outputParams.firstChannel = 0;
+            hasOutput = true;
         }
 
         // Open stream
         unsigned int bufferFrames = config.bufferSize;
         unsigned int sampleRate = config.sampleRate;
 
-        RtAudioErrorType result = pImpl->rtAudio.openStream(pImpl->hasOutput ? &pImpl->outputParams : nullptr,
-            pImpl->hasInput ? &pImpl->inputParams : nullptr,
+        RtAudioErrorType result = rtAudio.openStream(hasOutput ? &outputParams : nullptr,
+            hasInput ? &inputParams : nullptr,
             RTAUDIO_FLOAT32,
             sampleRate,
             &bufferFrames,
-            &Impl::RtAudioCallback,
-            pImpl.get());
+            &AudioDevice::RtAudioCallback,
+            this);
 
         if (result != RTAUDIO_NO_ERROR)
         {
-            pImpl->lastError = pImpl->rtAudio.getErrorText();
+            lastError = rtAudio.getErrorText();
             return false;
         }
 
         return true;
     }
 
-    bool AudioDevice::OpenDefault(const AudioStreamConfig &config, AudioCallback callback, void *userData)
+    bool AudioDevice::OpenDefault(const AudioStreamConfig &config, AudioCallback userCallback, void *userPtr)
     {
-        uint32_t defaultDevice = pImpl->rtAudio.getDefaultInputDevice();
-        return Open(defaultDevice, config, std::move(callback), userData);
+        uint32_t defaultDevice = rtAudio.getDefaultInputDevice();
+        return Open(defaultDevice, config, std::move(userCallback), userPtr);
     }
 
     bool AudioDevice::Start()
     {
         if (!IsOpen())
         {
-            pImpl->lastError = "Device not open";
+            lastError = "Device not open";
             return false;
         }
 
-        RtAudioErrorType result = pImpl->rtAudio.startStream();
+        RtAudioErrorType result = rtAudio.startStream();
         if (result != RTAUDIO_NO_ERROR)
         {
-            pImpl->lastError = pImpl->rtAudio.getErrorText();
+            lastError = rtAudio.getErrorText();
             return false;
         }
 
@@ -145,14 +92,14 @@ namespace GuitarIO
     {
         if (!IsRunning())
         {
-            pImpl->lastError = "Stream not running";
+            lastError = "Stream not running";
             return false;
         }
 
-        RtAudioErrorType result = pImpl->rtAudio.stopStream();
+        RtAudioErrorType result = rtAudio.stopStream();
         if (result != RTAUDIO_NO_ERROR)
         {
-            pImpl->lastError = pImpl->rtAudio.getErrorText();
+            lastError = rtAudio.getErrorText();
             return false;
         }
 
@@ -165,28 +112,60 @@ namespace GuitarIO
         {
             if (IsRunning())
             {
-                pImpl->rtAudio.stopStream();
+                rtAudio.stopStream();
             }
-            pImpl->rtAudio.closeStream();
+            rtAudio.closeStream();
         }
 
-        pImpl->hasInput = false;
-        pImpl->hasOutput = false;
+        hasInput = false;
+        hasOutput = false;
     }
 
     bool AudioDevice::IsOpen() const
     {
-        return pImpl->rtAudio.isStreamOpen();
+        return rtAudio.isStreamOpen();
     }
 
     bool AudioDevice::IsRunning() const
     {
-        return pImpl->rtAudio.isStreamRunning();
+        return rtAudio.isStreamRunning();
     }
 
     std::string AudioDevice::GetLastError() const
     {
-        return pImpl->lastError;
+        return lastError;
+    }
+
+    int AudioDevice::RtAudioCallback(void *outputBuffer,
+        void *inputBuffer,
+        unsigned int nFrames,
+        double /*streamTime*/,
+        RtAudioStreamStatus /*status*/,
+        void *userData)
+    {
+        auto *device = static_cast<AudioDevice *>(userData);
+        if (!device || !device->callback)
+        {
+            return 1; // Stop stream
+        }
+
+        // Create std::span wrappers for buffers
+        std::span<const float> inputSpan;
+        std::span<float> outputSpan;
+
+        if (inputBuffer != nullptr)
+        {
+            unsigned int channels = device->hasInput ? device->inputParams.nChannels : 1;
+            inputSpan = std::span<const float>(static_cast<const float *>(inputBuffer), nFrames * channels);
+        }
+
+        if (outputBuffer != nullptr)
+        {
+            unsigned int channels = device->hasOutput ? device->outputParams.nChannels : 1;
+            outputSpan = std::span<float>(static_cast<float *>(outputBuffer), nFrames * channels);
+        }
+
+        return device->callback(inputSpan, outputSpan, device->userData);
     }
 
 } // namespace GuitarIO

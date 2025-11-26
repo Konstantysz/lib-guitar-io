@@ -7,6 +7,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <RtAudio.h>
 
 namespace GuitarIO
 {
@@ -63,6 +64,7 @@ namespace GuitarIO
         ~AudioDevice();
 
         AudioDevice(const AudioDevice &) = delete;
+
         AudioDevice &operator=(const AudioDevice &) = delete;
 
         /**
@@ -79,6 +81,19 @@ namespace GuitarIO
         AudioDevice &operator=(AudioDevice &&other) noexcept;
 
         /**
+         * @brief Move constructor
+         * @param other Instance to move from
+         */
+        AudioDevice::AudioDevice(AudioDevice &&) noexcept = default;
+
+        /**
+         * @brief Move assignment operator
+         * @param other Instance to move from
+         * @return Reference to this instance
+         */
+        AudioDevice &AudioDevice::operator=(AudioDevice &&) noexcept = default;
+
+        /**
          * @brief Opens an audio stream
          * @param deviceId Device ID (use default if not specified)
          * @param config Stream configuration
@@ -86,16 +101,19 @@ namespace GuitarIO
          * @param userData User data pointer passed to callback
          * @return true on success, false on failure
          */
-        bool Open(uint32_t deviceId, const AudioStreamConfig &config, AudioCallback callback, void *userData = nullptr);
+        bool Open(uint32_t deviceId,
+            const AudioStreamConfig &config,
+            AudioCallback userCallback,
+            void *userPtr = nullptr);
 
         /**
          * @brief Opens the default audio input device
          * @param config Stream configuration
-         * @param callback Audio processing callback
-         * @param userData User data pointer passed to callback
+         * @param userCallback Audio processing callback
+         * @param userPtr User data pointer passed to callback
          * @return true on success, false on failure
          */
-        bool OpenDefault(const AudioStreamConfig &config, AudioCallback callback, void *userData = nullptr);
+        bool OpenDefault(const AudioStreamConfig &config, AudioCallback userCallback, void *userPtr = nullptr);
 
         /**
          * @brief Starts the audio stream
@@ -133,8 +151,31 @@ namespace GuitarIO
         [[nodiscard]] std::string GetLastError() const;
 
     private:
-        class Impl;
-        std::unique_ptr<Impl> pImpl; ///< PIMPL for RtAudio encapsulation
+        /**
+         * @brief RtAudio callback function
+         * @param outputBuffer Output audio buffer
+         * @param inputBuffer Input audio buffer
+         * @param nFrames Number of frames
+         * @param streamTime Stream time
+         * @param status Stream status
+         * @param userData User data pointer
+         * @return 0 to continue, non-zero to stop stream
+         */
+        static int RtAudioCallback(void *outputBuffer,
+            void *inputBuffer,
+            unsigned int nFrames,
+            double streamTime,
+            RtAudioStreamStatus status,
+            void *userData);
+
+        mutable RtAudio rtAudio;                ///< RtAudio instance
+        AudioCallback callback;                 ///< User callback function
+        void *userData = nullptr;               ///< User data pointer
+        mutable std::string lastError;          ///< Last error message
+        RtAudio::StreamParameters inputParams;  ///< Input stream parameters
+        RtAudio::StreamParameters outputParams; ///< Output stream parameters
+        bool hasInput = false;                  ///< Flag indicating input is enabled
+        bool hasOutput = false;                 ///< Flag indicating output is enabled
     };
 
 } // namespace GuitarIO

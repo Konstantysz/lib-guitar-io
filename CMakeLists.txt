@@ -48,6 +48,7 @@ add_library(guitar-io STATIC
     src/AudioDeviceManager.cpp
     src/SineWaveGenerator.cpp
     src/PolyphonicGenerator.cpp
+    src/AudioMixer.cpp
 )
 
 target_include_directories(guitar-io PUBLIC
