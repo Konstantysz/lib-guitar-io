@@ -1,5 +1,9 @@
 # lib-guitar-io
 
+[![Build Status](https://github.com/Konstantysz/kappa-core/actions/workflows/build.yml/badge.svg)](https://github.com/Konstantysz/kappa-core/actions/workflows/build.yml)
+[![Tests](https://github.com/Konstantysz/kappa-core/actions/workflows/tests.yml/badge.svg)](https://github.com/Konstantysz/kappa-core/actions/workflows/tests.yml)
+[![Static Analysis](https://github.com/Konstantysz/kappa-core/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/Konstantysz/kappa-core/actions/workflows/static-analysis.yml)
+
 Cross-platform audio I/O library for guitar applications.
 
 ## Overview
@@ -89,6 +93,7 @@ target_link_libraries(your-app PRIVATE guitar-io)
 ### Platform-specific dependencies
 
 **Linux:**
+
 ```bash
 # ALSA development libraries
 sudo apt install libasound2-dev  # Ubuntu/Debian
@@ -118,12 +123,14 @@ lib-guitar-io/
 **IMPORTANT:** The audio callback runs in a real-time thread with strict constraints:
 
 ❌ **DO NOT** in callback:
+
 - Allocate memory (`new`, `malloc`, `std::vector::push_back`)
 - Acquire locks (`std::mutex`, etc.)
 - Perform I/O (file, network, logging)
 - Call blocking functions
 
 ✅ **DO** in callback:
+
 - Use pre-allocated buffers
 - Use lock-free data structures
 - Perform signal processing
