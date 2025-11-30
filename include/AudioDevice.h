@@ -81,19 +81,6 @@ namespace GuitarIO
         AudioDevice &operator=(AudioDevice &&other) noexcept;
 
         /**
-         * @brief Move constructor
-         * @param other Instance to move from
-         */
-        AudioDevice::AudioDevice(AudioDevice &&) noexcept = default;
-
-        /**
-         * @brief Move assignment operator
-         * @param other Instance to move from
-         * @return Reference to this instance
-         */
-        AudioDevice &AudioDevice::operator=(AudioDevice &&) noexcept = default;
-
-        /**
          * @brief Opens an audio stream
          * @param deviceId Device ID (use default if not specified)
          * @param config Stream configuration
