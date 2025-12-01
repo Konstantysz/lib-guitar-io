@@ -16,13 +16,14 @@ This file provides guidance when working with the **lib-guitar-io** library.
 
 ## Repository Structure
 
-```
+```text
 lib-guitar-io/
 ├── include/
-│   ├── AudioDevice.h           # Main audio device interface
+│   ├── AudioDevice.h           # Abstract audio device interface
+│   ├── RtAudioDevice.h         # RtAudio implementation
 │   └── AudioDeviceManager.h    # Device enumeration
 ├── src/
-│   ├── AudioDevice.cpp         # Implementation
+│   ├── RtAudioDevice.cpp       # RtAudio implementation
 │   └── AudioDeviceManager.cpp  # Device management
 ├── external/
 │   └── rtaudio/                # RtAudio submodule
@@ -55,29 +56,35 @@ lib-guitar-io/
 
 ## Architecture
 
-### PIMPL Pattern
+### Interface-Based Design
 
-The library uses the Pointer to Implementation (PIMPL) idiom to hide RtAudio implementation details:
+The library uses an abstract interface pattern for testability and flexibility:
 
 ```cpp
+// AudioDevice.h - Abstract interface
 class AudioDevice
 {
 public:
-    AudioDevice();
-    ~AudioDevice();
-    // ... public interface ...
+    virtual ~AudioDevice() = default;
+    virtual bool Open(uint32_t deviceId, const AudioStreamConfig &config,
+                      AudioCallback callback, void *userData = nullptr) = 0;
+    virtual bool Start() = 0;
+    // ... other pure virtual methods ...
+};
 
-private:
-    class Impl;  // Forward declaration
-    std::unique_ptr<Impl> pImpl;  // Hides RtAudio details
+// RtAudioDevice.h - Concrete implementation
+class RtAudioDevice : public AudioDevice
+{
+    // Implements all virtual methods using RtAudio
 };
 ```
 
 **Benefits:**
 
-- Stable ABI (RtAudio changes don't affect public interface)
-- Faster compilation (RtAudio headers not in public headers)
-- Clean separation of concerns
+- Testable: Use `MockAudioDevice` for unit tests
+- Flexible: Easy to add alternative implementations
+- Clean dependency injection in application layer
+- Stable interface: RtAudio changes isolated to `RtAudioDevice`
 
 ### Real-Time Safety
 
@@ -113,8 +120,10 @@ Internally, a static adapter bridges RtAudio callbacks to `std::function`.
 
 ## Usage Example
 
+### Production Code
+
 ```cpp
-#include <AudioDevice.h>
+#include <RtAudioDevice.h>
 #include <AudioDeviceManager.h>
 
 // Configure stream
@@ -126,13 +135,13 @@ GuitarIO::AudioStreamConfig config{
 };
 
 // Audio callback
-auto callback = [](const float *input, float *output, size_t frames, void *userData) {
+auto callback = [](std::span<const float> input, std::span<float> output, void *userData) {
     // Process audio (real-time safe code only!)
     return 0;  // Continue stream
 };
 
 // Open and start device
-GuitarIO::AudioDevice device;
+GuitarIO::RtAudioDevice device;
 if (!device.OpenDefault(config, callback, nullptr))
 {
     std::cerr << "Failed: " << device.GetLastError() << std::endl;
@@ -149,6 +158,35 @@ if (!device.Start())
 
 device.Stop();
 device.Close();
+```
+
+### Testing with Dependency Injection
+
+```cpp
+#include <AudioDevice.h>  // Interface
+#include <memory>
+
+// Application layer accepts AudioDevice interface
+class AudioProcessingLayer
+{
+public:
+    // Dependency injection via constructor
+    AudioProcessingLayer(std::unique_ptr<GuitarIO::AudioDevice> device)
+        : audioDevice(std::move(device))
+    {
+    }
+
+private:
+    std::unique_ptr<GuitarIO::AudioDevice> audioDevice;
+};
+
+// Production: Use RtAudioDevice
+#include <RtAudioDevice.h>
+auto layer = AudioProcessingLayer(std::make_unique<GuitarIO::RtAudioDevice>());
+
+// Testing: Use MockAudioDevice
+#include <MockAudioDevice.h>
+auto mockLayer = AudioProcessingLayer(std::make_unique<MockAudioDevice>());
 ```
 
 ## Device Management
@@ -185,7 +223,7 @@ The library automatically selects the best audio API:
 ### Error Handling
 
 ```cpp
-GuitarIO::AudioDevice device;
+GuitarIO::RtAudioDevice device;
 
 if (!device.OpenDefault(config, callback))
 {

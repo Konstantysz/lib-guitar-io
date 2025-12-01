@@ -1,20 +1,22 @@
-#include "AudioDevice.h"
+#include "RtAudioDevice.h"
 #include <stdexcept>
 #include <RtAudio.h>
 
 namespace GuitarIO
 {
-    AudioDevice::AudioDevice()
+    RtAudioDevice::RtAudioDevice()
     {
     }
 
-    AudioDevice::~AudioDevice()
+    RtAudioDevice::~RtAudioDevice()
     {
         Close();
     }
 
-    bool
-        AudioDevice::Open(uint32_t deviceId, const AudioStreamConfig &config, AudioCallback userCallback, void *userPtr)
+    bool RtAudioDevice::Open(uint32_t deviceId,
+        const AudioStreamConfig &config,
+        AudioCallback userCallback,
+        void *userPtr)
     {
         if (IsOpen())
         {
@@ -52,7 +54,7 @@ namespace GuitarIO
             RTAUDIO_FLOAT32,
             sampleRate,
             &bufferFrames,
-            &AudioDevice::RtAudioCallback,
+            &RtAudioDevice::RtAudioCallback,
             this);
 
         if (result != RTAUDIO_NO_ERROR)
@@ -64,13 +66,13 @@ namespace GuitarIO
         return true;
     }
 
-    bool AudioDevice::OpenDefault(const AudioStreamConfig &config, AudioCallback userCallback, void *userPtr)
+    bool RtAudioDevice::OpenDefault(const AudioStreamConfig &config, AudioCallback userCallback, void *userPtr)
     {
         uint32_t defaultDevice = rtAudio.getDefaultInputDevice();
         return Open(defaultDevice, config, std::move(userCallback), userPtr);
     }
 
-    bool AudioDevice::Start()
+    bool RtAudioDevice::Start()
     {
         if (!IsOpen())
         {
@@ -88,7 +90,7 @@ namespace GuitarIO
         return true;
     }
 
-    bool AudioDevice::Stop()
+    bool RtAudioDevice::Stop()
     {
         if (!IsRunning())
         {
@@ -106,7 +108,7 @@ namespace GuitarIO
         return true;
     }
 
-    void AudioDevice::Close()
+    void RtAudioDevice::Close()
     {
         if (IsOpen())
         {
@@ -121,29 +123,29 @@ namespace GuitarIO
         hasOutput = false;
     }
 
-    bool AudioDevice::IsOpen() const
+    bool RtAudioDevice::IsOpen() const
     {
         return rtAudio.isStreamOpen();
     }
 
-    bool AudioDevice::IsRunning() const
+    bool RtAudioDevice::IsRunning() const
     {
         return rtAudio.isStreamRunning();
     }
 
-    std::string AudioDevice::GetLastError() const
+    std::string RtAudioDevice::GetLastError() const
     {
         return lastError;
     }
 
-    int AudioDevice::RtAudioCallback(void *outputBuffer,
+    int RtAudioDevice::RtAudioCallback(void *outputBuffer,
         void *inputBuffer,
         unsigned int nFrames,
         double /*streamTime*/,
         RtAudioStreamStatus /*status*/,
         void *userData)
     {
-        auto *device = static_cast<AudioDevice *>(userData);
+        auto *device = static_cast<RtAudioDevice *>(userData);
         if (!device || !device->callback)
         {
             return 1; // Stop stream

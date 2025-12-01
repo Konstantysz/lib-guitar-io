@@ -14,7 +14,7 @@ Cross-platform audio I/O library for guitar applications.
 - **macOS**: CoreAudio
 - **Linux**: ALSA
 
-Built on [RtAudio](https://github.com/thestk/rtaudio) with PIMPL pattern for clean API separation.
+Built on [RtAudio](https://github.com/thestk/rtaudio) with an interface-based design for testability and flexibility.
 
 ## Features
 
@@ -28,7 +28,7 @@ Built on [RtAudio](https://github.com/thestk/rtaudio) with PIMPL pattern for cle
 ## Usage
 
 ```cpp
-#include <AudioDevice.h>
+#include <RtAudioDevice.h>
 #include <AudioDeviceManager.h>
 
 using namespace GuitarIO;
@@ -37,15 +37,14 @@ using namespace GuitarIO;
 auto& manager = AudioDeviceManager::Get();
 auto devices = manager.EnumerateInputDevices();
 
-// Audio callback
-int audioCallback(const float* input, float* output,
-                  size_t frames, void* userData)
+// Audio callback (uses std::span for type safety)
+int audioCallback(std::span<const float> input, std::span<float> output, void* userData)
 {
     // Process audio here (real-time constraints apply!)
-    for (size_t i = 0; i < frames; ++i)
+    for (size_t i = 0; i < input.size(); ++i)
     {
         // Example: passthrough
-        if (output && input)
+        if (!output.empty())
         {
             output[i] = input[i];
         }
@@ -54,7 +53,7 @@ int audioCallback(const float* input, float* output,
 }
 
 // Open and start audio stream
-AudioDevice device;
+RtAudioDevice device;
 AudioStreamConfig config{
     .sampleRate = 48000,
     .bufferSize = 512,
@@ -105,18 +104,27 @@ sudo pacman -S alsa-lib          # Arch
 
 ## Architecture
 
-```
+```text
 lib-guitar-io/
 ├── include/
-│   ├── AudioDevice.h         # Main audio I/O interface
+│   ├── AudioDevice.h         # Abstract audio device interface
+│   ├── RtAudioDevice.h       # RtAudio implementation
 │   └── AudioDeviceManager.h  # Device enumeration
 ├── src/
-│   ├── AudioDevice.cpp       # PIMPL implementation
+│   ├── RtAudioDevice.cpp     # RtAudio implementation
 │   └── AudioDeviceManager.cpp
 ├── external/
 │   └── rtaudio/              # RtAudio submodule
 └── CMakeLists.txt
 ```
+
+The library uses an **interface-based design**:
+
+- `AudioDevice` - Abstract interface (pure virtual methods)
+- `RtAudioDevice` - Concrete implementation using RtAudio
+- `MockAudioDevice` - Test implementation (in consuming projects)
+
+This design enables dependency injection and unit testing without requiring real audio hardware.
 
 ## Real-Time Safety
 

@@ -44,7 +44,7 @@ add_subdirectory(external/rtaudio)
 
 # Create guitar-io library (static)
 add_library(guitar-io STATIC
-    src/AudioDevice.cpp
+    src/RtAudioDevice.cpp
     src/AudioDeviceManager.cpp
     src/SineWaveGenerator.cpp
     src/PolyphonicGenerator.cpp
