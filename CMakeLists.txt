@@ -16,31 +16,17 @@ elseif(UNIX)
     add_compile_definitions(PLATFORM_LINUX)
 endif()
 
-# Git submodule initialization (for RtAudio)
-find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" ON)
-    if(GIT_SUBMODULE)
-        message(STATUS "Initializing RtAudio submodule...")
-        execute_process(
-            COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            RESULT_VARIABLE GIT_SUBMOD_RESULT
-        )
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-            message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}")
-        endif()
-    endif()
-endif()
+# FetchContent for rtaudio
+include(FetchContent)
 
-# Verify RtAudio submodule exists
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/external/rtaudio/CMakeLists.txt")
-    message(FATAL_ERROR "RtAudio submodule not found. Run: git submodule update --init --recursive")
-endif()
-
-# Add RtAudio (disable building examples and tests)
-set(RTAUDIO_BUILD_TESTING OFF CACHE BOOL "Don't build RtAudio tests")
-add_subdirectory(external/rtaudio)
+FetchContent_Declare(
+    rtaudio
+    GIT_REPOSITORY https://github.com/thestk/rtaudio.git
+    GIT_TAG        ab7daaae763c8e0dcea611a9e190fa46d95b2639
+)
+# Dont build tests
+set(RTAUDIO_BUILD_TESTING OFF CACHE BOOL "Don't build RtAudio tests" FORCE)
+FetchContent_MakeAvailable(rtaudio)
 
 # Create guitar-io library (static)
 add_library(guitar-io STATIC
