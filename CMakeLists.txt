@@ -40,6 +40,10 @@ endif()
 
 # Add RtAudio (disable building examples and tests)
 set(RTAUDIO_BUILD_TESTING OFF CACHE BOOL "Don't build RtAudio tests")
+
+# Rename RtAudio's uninstall target to prevent conflicts with other dependencies
+set(RTAUDIO_TARGETNAME_UNINSTALL "rtaudio-uninstall" CACHE STRING "RtAudio uninstall target name")
+
 add_subdirectory(external/rtaudio)
 
 # Create guitar-io library (static)
